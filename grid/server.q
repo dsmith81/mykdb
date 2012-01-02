@@ -79,7 +79,7 @@ distribute:{[data;divide;process;rebuild]
 
 	chunks:divide[count .server.SLAVES;data];
 	.server.RESULT:();
-	.server.remote_exec[;process;.server.insert_result[.server.process_complete[rebuild]];] ./: flip (.server.SLAVES;chunks);
+	.server.remote_exec[;process;;.server.insert_result[.server.process_complete[rebuild]]] ./: flip (.server.SLAVES;chunks);
 
  };
 
