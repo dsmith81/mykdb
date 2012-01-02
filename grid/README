@@ -1,0 +1,47 @@
+this is a proof of concept / example on using async operations to implement basic grid functionality in kdb
+more specifically, the concept is to 
+1.  take a function F[Data->Result] on some large data set D, 
+2.  break that operation down into smaller chunks, List<D>
+3.  asyncronously farm those smaller chunks out to slave kdb instances
+4.  slave kdb instances process the data in parrallel.
+5.  result chunks are returned to master instance List List<R>
+6.  and recombined into one large result R.
+
+It works as long as some function exists which can transform a large input data set into smaller data sets
+such that the result of performing the intended operation on those smaller sets
+can be recombined to form the same result as would have been obtained by performing the operation the original input
+
+It's simpler with an example:
+
+input data: "abcdefghijklmnopqrstuvwxyz"
+operation: upper
+divide: { split the input strings into smaller chunks}
+recombine: raze
+
+eg upper["abcdefghijklmnopqrstuvwxyz"] ~ raze (upper[abcdefghijklm];upper[nopqrstuvwxyz])
+
+usage:  
+
+start 1 q server process
+$q server.q -p 9999
+
+start 2 q client processes
+$q client.q -p 10001
+$q client.q -p 10002
+
+both clients have to register with the server
+q1).slave.register[`::9999]
+q2).slave.register[`::9999]
+
+
+on the server, call "distribute" with the necessary arguments, eg:
+data:"abcdefghi";
+divide:{[chunks;input] (chunks; 0N)#input};
+process:upper
+rebuild:raze
+
+q)divide
+{[chunks;input] (chunks; 0N)#input}
+q)distribute["abcdef";divide;upper;raze]
+q)"done: "
+"ABCDEF"
